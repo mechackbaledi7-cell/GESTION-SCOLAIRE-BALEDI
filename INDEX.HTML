@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BALEDI SUPER ADMIN V2</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{--bg-sidebar:#0f172a;--bg-body:#f1f5f9;--primary:#2563eb;--text-main:#1e293b;--text-muted:#64748b;--white:#fff;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--border:#e2e8f0}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif}
+body{background:var(--bg-body);color:var(--text-main);display:flex;height:100vh;overflow:hidden}
+#login-screen{position:fixed;inset:0;background:var(--bg-sidebar);z-index:9999;display:flex;justify-content:center;align-items:center}
+.login-box{background:var(--white);padding:30px;border-radius:15px;width:90%;max-width:350px;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,.5)}
+.login-box h2{font-size:20px;margin-bottom:5px;color:var(--text-main)}
+.login-box input{width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;margin:10px 0;font-size:14px;text-align:center}
+.login-box button{width:100%;padding:12px;background:var(--primary);color:white;border:0;border-radius:8px;font-weight:700;cursor:pointer;margin-top:10px}
+.login-error{color:var(--danger);font-size:12px;margin-top:10px;display:none}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150}
+.sidebar-overlay.active{display:block}
+.sidebar{width:260px;flex:0 0 260px;background:var(--bg-sidebar);color:var(--white);display:flex;flex-direction:column;height:100%;z-index:200;overflow-y:auto;transition:transform .3s ease}
+.brand{padding:25px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.1)}
+.brand-logo{width:40px;height:40px;background:var(--primary);border-radius:10px;display:flex;justify-content:center;align-items:center;font-size:20px}
+.brand-text h1{font-size:16px;font-weight:800}
+.brand-text p{font-size:10px;color:#94a3b8}
+.menu{flex:1;padding:20px 10px;list-style:none}
+.menu-item{display:flex;align-items:center;gap:15px;padding:12px 15px;color:#cbd5e1;border-radius:8px;margin-bottom:5px;font-size:14px;font-weight:500;cursor:pointer;transition:.2s}
+.menu-item:hover,.menu-item.active{background:var(--primary);color:var(--white)}
+.main-content{flex:1;min-width:0;display:flex;flex-direction:column;overflow-y:auto;padding-bottom:70px;width:100%}
+.topbar{background:var(--white);height:70px;flex:0 0 70px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;box-shadow:0 1px 3px rgba(0,0,0,.05);z-index:10}
+.topbar-left{display:flex;align-items:center;gap:15px}
+.menu-btn{display:none;font-size:22px;background:none;border:0;color:var(--text-main);cursor:pointer}
+.topbar-right{display:flex;align-items:center;gap:20px}
+.avatar{width:40px;height:40px;background:#cbd5e1;border-radius:50%;display:flex;justify-content:center;align-items:center;font-weight:bold;color:var(--primary)}
+.page-section{display:none;padding:20px;animation:fadeIn .3s ease}
+.page-section.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.welcome-banner{background:linear-gradient(135deg,#1e3a8a,#2563eb);border-radius:15px;padding:20px;color:var(--white);margin-bottom:20px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;margin-bottom:20px}
+.stat-card{background:var(--white);border-radius:15px;padding:15px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 6px -1px rgba(0,0,0,.05);border-left:5px solid transparent}
+.stat-icon{width:40px;height:40px;border-radius:10px;display:flex;justify-content:center;align-items:center;font-size:18px}
+.stat-info h3{font-size:20px;font-weight:800}
+.stat-info p{font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase}
+.card-blue{border-left-color:#3b82f6}.card-blue .stat-icon{background:#eff6ff;color:#3b82f6}
+.card-green{border-left-color:var(--success)}.card-green .stat-icon{background:#ecfdf5;color:var(--success)}
+.card-orange{border-left-color:var(--warning)}.card-orange .stat-icon{background:#fffbeb;color:var(--warning)}
+.card-red{border-left-color:var(--danger)}.card-red .stat-icon{background:#fef2f2;color:var(--danger)}
+.card-purple{border-left-color:#8b5cf6}.card-purple .stat-icon{background:#f5f3ff;color:#8b5cf6}
+.card{background:var(--white);border-radius:15px;box-shadow:0 4px 6px -1px rgba(0,0,0,.05);overflow:hidden;display:flex;flex-direction:column;margin-bottom:20px}
+.card-header{padding:15px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.card-header h3{font-size:14px;font-weight:700;display:flex;align-items:center;gap:10px}
+.card-body{padding:15px;flex:1}
+.btn{padding:10px 15px;border-radius:8px;border:0;font-weight:600;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;gap:8px}
+.btn-sm{padding:5px 9px;font-size:11px}
+.btn-primary{background:var(--primary);color:white}
+.btn-success{background:var(--success);color:white}
+.btn-danger{background:var(--danger);color:white}
+.btn-ghost{background:#e2e8f0;color:#1e293b}
+.table{width:100%;border-collapse:collapse}
+.table th{text-align:left;padding:10px 15px;font-size:10px;text-transform:uppercase;color:var(--text-muted);background:#f8fafc;border-bottom:1px solid var(--border)}
+.table td{padding:12px 15px;border-bottom:1px solid var(--border);font-size:12px}
+.badge{padding:4px 8px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap}
+.badge.success{background:#ecfdf5;color:var(--success)}
+.badge.warning{background:#fffbeb;color:var(--warning)}
+.badge.danger{background:#fef2f2;color:var(--danger)}
+.badge.info{background:#eff6ff;color:var(--primary)}
+.etab-item{background:var(--white);padding:15px;border-radius:12px;display:flex;align-items:center;gap:15px;cursor:pointer;border:1px solid var(--border);margin-bottom:10px}
+.etab-item.active{border-color:var(--primary)}
+.etab-logo{width:40px;height:40px;background:#eff6ff;border-radius:10px;display:flex;justify-content:center;align-items:center;color:var(--primary);font-size:18px;flex:0 0 40px}
+.etab-info h4{font-size:14px;font-weight:700}
+.etab-info p{font-size:12px;color:var(--text-muted);margin-top:3px}
+.etab-details{background:var(--white);border-radius:15px;padding:15px;margin-top:15px;border:1px solid var(--border)}
+.info-box{background:#f8fafc;padding:12px;border-radius:10px;margin-bottom:10px}
+.progress-container{background:#e2e8f0;border-radius:10px;height:6px;margin-top:10px}
+.progress-bar{height:100%;background:var(--success);border-radius:10px}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:12px;font-weight:600;margin-bottom:5px;color:var(--text-muted)}
+.form-control{width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px}
+.empty-state{text-align:center;padding:30px;color:var(--text-muted);font-size:13px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;justify-content:center;align-items:center;padding:15px}
+.modal-overlay.active{display:flex}
+.modal-box{background:white;padding:20px;border-radius:15px;width:90%;max-width:400px;max-height:90vh;overflow-y:auto}
+.modal-box h3{margin-bottom:15px;font-size:18px}
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--white);box-shadow:0 -2px 10px rgba(0,0,0,.1);z-index:1000;justify-content:space-around;padding:10px 5px}
+.m-item{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;color:var(--text-muted);cursor:pointer}
+.m-item i{font-size:18px}
+.m-item.active{color:var(--primary);font-weight:700}
+.toast-container{position:fixed;top:20px;right:20px;z-index:5000;display:flex;flex-direction:column;gap:10px;max-width:320px}
+.toast{padding:12px 18px;border-radius:10px;color:#fff;font-size:13px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.15);animation:slideIn .3s ease}
+.toast.success{background:var(--success)}
+.toast.error{background:var(--danger)}
+.toast.info{background:var(--primary)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.search-bar{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-bottom:12px}
+.activity-item{padding:10px 0;border-bottom:1px solid var(--border);font-size:12px;display:flex;justify-content:space-between;gap:10px}
+.activity-item:last-child{border-bottom:0}
+.activity-item .muted{color:var(--text-muted);font-size:11px}
+.slug-badge{display:inline-block;background:#f1f5f9;color:#334155;padding:3px 8px;border-radius:6px;font-family:monospace;font-size:11px;font-weight:600}
+@media(max-width:768px){
+  .sidebar{position:fixed;top:0;bottom:0;left:0;transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .menu-btn{display:block}
+  .topbar{padding:0 15px;height:60px;flex-basis:60px}
+  .mobile-nav{display:flex}
+  .page-section{padding:15px}
+  .table-wrap{width:100%;overflow-x:auto}
+  .table{min-width:500px}
+}
+</style>
+</head>
+<body>
+<div class="toast-container" id="toast-container"></div>
+<div id="login-screen">
+  <div class="login-box">
+    <h2 id="login-brand-name">BALEDI SUPER ADMIN V2</h2>
+    <p>Veuillez vous identifier</p>
+    <input type="email" id="login-email" placeholder="Adresse Email" autocomplete="username">
+    <input type="password" id="login-password" placeholder="Mot de passe" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
+    <button onclick="login()">Se connecter</button>
+    <div id="login-error" class="login-error">Erreur de connexion</div>
+  </div>
+</div>
+<div id="app-container" style="display:none;width:100%;height:100%;">
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <div class="brand-logo"><i class="fa-solid fa-book-open"></i></div>
+    <div class="brand-text"><h1 id="sidebar-brand-name">BALEDI</h1><p>SUPER ADMIN V2</p></div>
+  </div>
+  <ul class="menu">
+    <li class="menu-item active" onclick="navigateTo('dashboard')"><i class="fa-solid fa-house"></i> Tableau de bord</li>
+    <li class="menu-item" onclick="navigateTo('etablissements')"><i class="fa-solid fa-school"></i> Établissements</li>
+    <li class="menu-item" onclick="navigateTo('prospection')"><i class="fa-solid fa-users"></i> Prospection</li>
+    <li class="menu-item" onclick="navigateTo('licences')"><i class="fa-solid fa-id-card"></i> Licences</li>
+    <li class="menu-item" onclick="navigateTo('paiements')"><i class="fa-solid fa-money-bill-wave"></i> Paiements</li>
+    <li class="menu-item" onclick="navigateTo('contrats')"><i class="fa-solid fa-file-contract"></i> Contrats</li>
+    <li class="menu-item" onclick="navigateTo('essais')"><i class="fa-solid fa-hourglass-half"></i> Essais Gratuits</li>
+    <li class="menu-item" onclick="navigateTo('assistance')"><i class="fa-solid fa-headset"></i> Assistance</li>
+    <li class="menu-item" onclick="navigateTo('notifications')"><i class="fa-solid fa-bell"></i> Notifications</li>
+    <li class="menu-item" onclick="navigateTo('rapports')"><i class="fa-solid fa-chart-pie"></i> Rapports</li>
+    <li class="menu-item" onclick="navigateTo('utilisateurs')"><i class="fa-solid fa-user-shield"></i> Utilisateurs</li>
+    <li class="menu-item" onclick="navigateTo('audit')"><i class="fa-solid fa-shield-halved"></i> Journal d'Audit</li>
+    <li class="menu-item" onclick="navigateTo('parametres')"><i class="fa-solid fa-gear"></i> Paramètres</li>
+    <li class="menu-item" onclick="logout()" style="margin-top:20px;color:#fca5a5"><i class="fa-solid fa-right-from-bracket"></i> Déconnexion</li>
+  </ul>
+</aside>
+<main class="main-content">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-btn" onclick="toggleSidebar()" aria-label="Ouvrir le menu"><i class="fa-solid fa-bars"></i></button>
+    </div>
+    <div class="topbar-right">
+      <span id="connection-status" style="font-size:12px;font-weight:bold;color:var(--warning)"><i class="fa-solid fa-circle-notch fa-spin"></i> Connexion...</span>
+      <div class="avatar" id="user-avatar">A</div>
+    </div>
+  </header>
+
+<section id="page-dashboard" class="page-section active">
+  <div class="welcome-banner">
+    <h2 style="font-size:18px">Bonjour, Admin ! 👋</h2>
+    <p style="font-size:12px;opacity:.8;margin-top:5px">Voici l'état de votre réseau.</p>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card card-blue"><div class="stat-icon"><i class="fa-solid fa-school"></i></div><div class="stat-info"><h3 id="stat-total-ecoles">0</h3><p>Écoles</p></div></div>
+    <div class="stat-card card-green"><div class="stat-icon"><i class="fa-solid fa-check"></i></div><div class="stat-info"><h3 id="stat-total-actives">0</h3><p>Actives</p></div></div>
+    <div class="stat-card card-orange"><div class="stat-icon"><i class="fa-solid fa-hourglass-half"></i></div><div class="stat-info"><h3 id="stat-total-essais">0</h3><p>En essai</p></div></div>
+    <div class="stat-card card-red"><div class="stat-icon"><i class="fa-solid fa-pause"></i></div><div class="stat-info"><h3 id="stat-total-suspendues">0</h3><p>Suspendues</p></div></div>
+    <div class="stat-card card-purple"><div class="stat-icon"><i class="fa-solid fa-money-bill"></i></div><div class="stat-info"><h3 id="stat-total-revenus">0 $</h3><p>Revenus</p></div></div>
+  </div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-chart-line" style="color:var(--primary)"></i> Recettes Globales</h3></div><div class="card-body"><canvas id="revenueChart" style="width:100%;height:150px"></canvas></div></div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-bolt" style="color:var(--warning)"></i> Activités récentes</h3></div><div class="card-body" id="dashboard-activity"></div></div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-receipt" style="color:var(--success)"></i> Transactions récentes</h3></div><div class="card-body" id="dashboard-transactions"></div></div>
+  <div class="card"><div class="card-header"><h3><i class="fa-solid fa-heart-pulse" style="color:var(--success)"></i> État du système</h3></div><div class="card-body" id="dashboard-system"></div></div>
+</section>
+
+<section id="page-etablissements" class="page-section">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:15px">
+    <h2 style="font-size:20px">Écoles</h2>
+    <button class="btn btn-primary" onclick="openModal('modal-add-ecole')"><i class="fa-solid fa-plus"></i> Ajouter</button>
+  </div>
+  <input type="text" id="search-ecoles" class="search-bar" placeholder="Rechercher une école..." oninput="renderEcoles()">
+  <div class="etab-layout">
+    <div id="ecoles-list-container"></div>
+    <div class="etab-details" id="ecole-details-container" style="display:none"></div>
+  </div>
+</section>
+
+<section id="page-prospection" class="page-section">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:15px">
+    <h2 style="font-size:20px">Prospection</h2>
+    <button class="btn btn-primary" onclick="openModal('modal-add-prospect')"><i class="fa-solid fa-plus"></i> Nouveau Prospect</button>
+  </div>
+  <div class="card table-wrap">
+    <table class="table"><thead><tr><th>École</th><th>Contact</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="prospects-table-body"></tbody></table>
+  </div>
+</section>
+
+<section id="page-licences" class="page-section">
+  <h2 style="font-size:20px;margin-bottom:15px">Licences</h2>
+  <div class="card table-wrap">
+    <table class="table"><thead><tr><th>École</th><th>Slug</th><th>Statut</th><th>Début</th><th>Fin</th></tr></thead><tbody id="licences-table-body"></tbody></table>
+  </div>
+</section>
+
+<section id="page-paiements" class="page-section">
+  <h2 style="font-size:20px;margin-bottom:15px">Enregistrer un paiement</h2>
+  <div class="card"><div class="card-body">
+    <div class="form-group"><label>École</label><select id="pay-ecole" class="form-control"><option value="">Sélectionner une école</option></select></div>
+    <div class="form-group"><label>Montant ($)</label><input type="number" id="pay-montant" class="form-control" placeholder="Ex: 150" min="0.01" step="0.01"></div>
+    <button class="btn btn-success" style="width:100%;justify-content:center" onclick="enregistrerPaiement()">Valider le paiement</button>
+  </div></div>
+  <h2 style="font-size:16px;margin-bottom:15px">Historique des transactions</h2>
+  <div class="card table-wrap">
+    <table class="table"><thead><tr><th>Date</th><th>École</th><th>Montant</th></tr></thead><tbody id="transactions-table-body"></tbody></table>
+  </div>
+</section>
+
+<section id="page-contrats" class="page-section">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:15px">
+    <h2 style="font-size:20px">Contrats</h2>
+    <button class="btn btn-primary" onclick="openModal('modal-add-contrat')"><i class="fa-solid fa-plus"></i> Nouveau</button>
+  </div>
+  <div class="card table-wrap">
+    <table class="table"><thead><tr><th>École</th><th>Date</th><th>Statut</th></tr></thead><tbody id="contrats-table-body"></tbody></table>
+  </div>
+</section>
+
+<section id="page-essais" class="page-section">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:15px">
+    <h2 style="font-size:20px">Essais gratuits</h2>
+    <button class="btn btn-primary" onclick="openModal('modal-add-essai')"><i class="fa-solid fa-plus"></i> Démarrer un essai</button>
+  </div>
+  <div class="card table-wrap">
+    <table class="table"><thead><tr><th>École</th><th>Slug</th><th>Début</th><th>Fin prévue</th><th>Statut</th><th>Action</th></tr></thead><tbody id="essais-table-body"></tbody></table>
+  </div>
+</section>
+
+<section id="page-assistance" class="page-section">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:15px">
+    <h2 style="font-size:20px">Support</h2>
+    <button class="btn btn-primary" onclick="openModal('modal-add-ticket')"><i class="fa-solid fa-plus"></i> Ticket</button>
+  </div>
+  <div class="card table-wrap">
+    <table class="table"><thead><tr><th>École</th><th>Sujet</th><th>Statut</th><th>Action</th></tr></thead><tbody id="tickets-table-body"></tbody></table>
+  </div>
+</section>
+
+<section id="page-notifications" class="page-section">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:15px">
+    <h2 style="font-size:20px">Notifications</h2>
+    <button class="btn btn-primary" onclick="openModal('modal-add-notif')"><i class="fa-solid fa-paper-plane"></i> Envoyer</button>
+  </div>
+  <div class="card table-wrap">
+    <table class="table"><thead><tr><th>Date</th><th>Titre</th><th>Message</th></tr></thead><tbody id="notifs-table-body"></tbody></table>
+  </div>
+</section>
+
+<section id="page-rapports" class="page-section">
+  <h2 style="font-size:20px;margin-bottom:15px">Rapports</h2>
+  <div class="card">
+    <div class="card-header"><h3>Répartition des Écoles</h3></div>
+    <div class="card-body" style="display:flex;justify-content:center"><canvas id="statusChart" style="max-height:200px;width:100%"></canvas></div>
+  </div>
+</section>
+
+<section id="page-utilisateurs" class="page-section">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:15px">
+    <h2 style="font-size:20px">Équipe</h2>
+    <button class="btn btn-primary" onclick="openModal('modal-add-user')"><i class="fa-solid fa-plus"></i> Inviter</button>
+  </div>
+  <div class="card table-wrap">
+    <table class="table"><thead><tr><th>Nom</th><th>Rôle</th></tr></thead><tbody id="users-table-body"></tbody></table>
+  </div>
+</section>
+
+<section id="page-audit" class="page-section">
+  <h2 style="font-size:20px;margin-bottom:15px">Journal d'Audit</h2>
+  <div class="card table-wrap">
+    <table class="table"><thead><tr><th>Date</th><th>Utilisateur</th><th>Action</th></tr></thead><tbody id="audit-table-body"></tbody></table>
+  </div>
+</section>
+
+<section id="page-parametres" class="page-section">
+  <h2 style="font-size:20px;margin-bottom:15px">Paramètres</h2>
+  <div class="card"><div class="card-body">
+    <div class="form-group"><label>Nom de l'entreprise</label><input type="text" id="set-nom" class="form-control"></div>
+    <div class="form-group"><label>Prix de la licence ($)</label><input type="number" id="set-prix" class="form-control" min="0.01" step="0.01"></div>
+    <div class="form-group"><label>Nom du fichier école (pour le lien)</label><input type="text" id="set-fichier" class="form-control" placeholder="BALEDI_GESTION_SCOLAIRE.html"></div>
+    <button class="btn btn-primary" onclick="sauvegarderParametres()">Enregistrer</button>
+  </div></div>
+  <div class="card">
+    <div class="card-header"><h3><i class="fa-solid fa-download"></i> Sauvegarde</h3></div>
+    <div class="card-body">
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Exportez l'intégralité des données au format JSON.</p>
+      <button class="btn btn-ghost" onclick="exportData()"><i class="fa-solid fa-file-export"></i> Exporter les données (JSON)</button>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<div class="mobile-nav">
+  <div class="m-item active" onclick="navigateTo('dashboard')"><i class="fa-solid fa-house"></i><span>Accueil</span></div>
+  <div class="m-item" onclick="navigateTo('etablissements')"><i class="fa-solid fa-school"></i><span>Écoles</span></div>
+  <div class="m-item" onclick="navigateTo('paiements')"><i class="fa-solid fa-money-bill"></i><span>Payer</span></div>
+  <div class="m-item" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i><span>Menu</span></div>
+</div>
+
+<div class="modal-overlay" id="modal-add-ecole">
+  <div class="modal-box">
+    <h3>Nouvelle École</h3>
+    <div class="form-group"><label>Nom de l'école *</label><input type="text" id="new-nom" class="form-control"></div>
+    <div class="form-group"><label>Ville</label><input type="text" id="new-ville" class="form-control"></div>
+    <div class="form-group"><label>Date de fin de licence (optionnel)</label><input type="date" id="new-date-fin" class="form-control"></div>
+    <div class="notice" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px;font-size:11px;color:#1e40af;margin-top:10px">
+      <i class="fa-solid fa-info-circle"></i> Un code d'accès unique sera généré automatiquement, et l'espace de stockage de l'école sera créé dans Firebase.
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-ecole')">Annuler</button>
+      <button class="btn btn-primary" onclick="ajouterEcole()">Créer l'école</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-edit-ecole">
+  <div class="modal-box">
+    <h3>Modifier l'école</h3>
+    <input type="hidden" id="edit-id">
+    <div class="form-group"><label>Nom</label><input type="text" id="edit-nom" class="form-control"></div>
+    <div class="form-group"><label>Ville</label><input type="text" id="edit-ville" class="form-control"></div>
+    <div class="form-group"><label>Date de fin de licence</label><input type="date" id="edit-date-fin" class="form-control"></div>
+    <div class="form-group"><label>Code d'accès (slug)</label><input type="text" id="edit-slug" class="form-control" readonly style="background:#f1f5f9;color:#64748b"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-ecole')">Annuler</button>
+      <button class="btn btn-primary" onclick="sauvegarderEcole()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-add-prospect">
+  <div class="modal-box">
+    <h3>Nouveau Prospect</h3>
+    <div class="form-group"><label>Nom de l'école</label><input type="text" id="pros-nom" class="form-control"></div>
+    <div class="form-group"><label>Contact</label><input type="text" id="pros-contact" class="form-control"></div>
+    <div class="form-group"><label>Ville</label><input type="text" id="pros-ville" class="form-control"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-prospect')">Annuler</button>
+      <button class="btn btn-primary" onclick="ajouterProspect()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-add-contrat">
+  <div class="modal-box">
+    <h3>Nouveau Contrat</h3>
+    <div class="form-group"><label>École</label><select id="contrat-ecole" class="form-control"></select></div>
+    <div class="form-group"><label>Date</label><input type="date" id="contrat-date" class="form-control"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-contrat')">Annuler</button>
+      <button class="btn btn-primary" onclick="ajouterContrat()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-add-essai">
+  <div class="modal-box">
+    <h3>Démarrer un essai gratuit</h3>
+    <div class="form-group"><label>École</label><select id="essai-ecole" class="form-control"></select></div>
+    <div class="form-group"><label>Durée (jours)</label><input type="number" id="essai-duree" class="form-control" min="1" max="90" value="15"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-essai')">Annuler</button>
+      <button class="btn btn-primary" onclick="demarrerEssai()">Démarrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-add-notif">
+  <div class="modal-box">
+    <h3>Envoyer une notification</h3>
+    <div class="form-group"><label>Titre</label><input type="text" id="notif-titre" class="form-control"></div>
+    <div class="form-group"><label>Message</label><textarea id="notif-message" class="form-control" rows="3"></textarea></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-notif')">Annuler</button>
+      <button class="btn btn-primary" onclick="envoyerNotif()">Envoyer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-add-ticket">
+  <div class="modal-box">
+    <h3>Nouveau Ticket</h3>
+    <div class="form-group"><label>École</label><input type="text" id="ticket-ecole" class="form-control"></div>
+    <div class="form-group"><label>Sujet</label><input type="text" id="ticket-sujet" class="form-control"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-ticket')">Annuler</button>
+      <button class="btn btn-primary" onclick="ajouterTicket()">Ouvrir</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-add-user">
+  <div class="modal-box">
+    <h3>Inviter</h3>
+    <div class="form-group"><label>Nom complet</label><input type="text" id="user-nom" class="form-control"></div>
+    <div class="form-group"><label>Rôle</label><select id="user-role" class="form-control"><option>Admin Commercial</option><option>Support Technique</option></select></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-user')">Annuler</button>
+      <button class="btn btn-primary" onclick="ajouterUtilisateur()">Inviter</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script type="module">
+// ==========================================
+// CONFIGURATION FIREBASE V2 (SANDBOX)
+// ==========================================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBFteFbNSAxkXJFoUHRG62lJFGGpas1WvI",
+  authDomain: "baledi-sandbox.firebaseapp.com",
+  databaseURL: "https://baledi-sandbox-default-rtdb.firebaseio.com",
+  projectId: "baledi-sandbox",
+  storageBucket: "baledi-sandbox.firebasestorage.app",
+  messagingSenderId: "736808495968",
+  appId: "1:736808495968:web:abcb6f185c54db26d14c05"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// Variables globales
+const FIREBASE_BASE = 'https://baledi-sandbox-default-rtdb.firebaseio.com';
+const FIREBASE_ADMIN_PATH = '/baledi_pro.json';
+const DEFAULT_SETTINGS = { nomEntreprise: 'BALEDI', prixLicence: 300, fichierEcole: 'BALEDI_GESTION_SCOLAIRE.html' };
+
+let appData = {
+  ecoles: [], prospects: [], utilisateurs: [], tickets: [], contrats: [], essaisGratuits: [], notifications: [], transactions: [], auditLog: [], settings: { ...DEFAULT_SETTINGS }
+};
+let selectedEcoleId = null;
+let chartInstance = null;
+let donutInstance = null;
+let _serverOnline = false;
+
+const $ = id => document.getElementById(id);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const money = n => Number(n || 0).toLocaleString('fr-FR', { maximumFractionDigits: 2 });
+
+// ========== SLUG ==========
+function generateSlug(nom) {
+  return String(nom).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+
+// ========== AUTHENTIFICATION FIREBASE ==========
+window.login = async function() {
+  const email = $('login-email').value;
+  const password = $('login-password').value;
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    $('login-error').style.display = 'none';
+  } catch (error) {
+    $('login-error').style.display = 'block';
+    $('login-error').textContent = "Identifiants incorrects ou erreur réseau.";
+  }
+};
+
+window.logout = function() {
+  if (confirm('Se déconnecter ?')) { signOut(auth); }
+};
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    $('login-screen').style.display = 'none';
+    $('app-container').style.display = 'flex';
+    $('user-avatar').textContent = user.email.charAt(0).toUpperCase();
+    if(!window._dataLoaded) { loadData(); window._dataLoaded = true; }
+  } else {
+    $('login-screen').style.display = 'flex';
+    $('app-container').style.display = 'none';
+    window._dataLoaded = false;
+  }
+});
+
+window.toggleSidebar = function() {
+  $('sidebar').classList.toggle('open');
+  $('sidebar-overlay').classList.toggle('active');
+};
+
+// ========== TOAST ==========
+function showToast(message, type) {
+  type = type || 'info';
+  const c = $('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = message;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+// ========== CHARGEMENT / SAUVEGARDE ==========
+function normalizeData(data) {
+  const base = { ...appData, ...(data && typeof data === 'object' ? data : {}) };
+  ['ecoles', 'prospects', 'utilisateurs', 'tickets', 'contrats', 'essaisGratuits', 'notifications', 'transactions', 'auditLog'].forEach(k => { if (!Array.isArray(base[k])) base[k] = []; });
+  base.settings = { ...DEFAULT_SETTINGS, ...(base.settings && typeof base.settings === 'object' ? base.settings : {}) };
+  if (base.utilisateurs.length === 0) base.utilisateurs.push({ id: 1, nom: 'Administrateur', role: 'Super Admin', statut: 'En ligne' });
+  return base;
+}
+
+function setConnection(ok, message) {
+  const el = $('connection-status');
+  el.innerHTML = ok ? '<span style="color:var(--success)"><i class="fa-solid fa-check-circle"></i> Connecté</span>' : '<span style="color:var(--danger)"><i class="fa-solid fa-triangle-exclamation"></i> ' + (message || 'Hors ligne') + '</span>';
+}
+
+async function loadData() {
+  try {
+    const res = await fetch(FIREBASE_BASE + FIREBASE_ADMIN_PATH, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    appData = normalizeData(data);
+    _serverOnline = true;
+    setConnection(true);
+    updateBrand();
+    renderAll();
+  } catch (e) {
+    _serverOnline = false;
+    setConnection(false, 'Connexion impossible');
+    try { const local = JSON.parse(localStorage.getItem('baledi_admin_local') || 'null'); if (local) appData = normalizeData(local); } catch (e2) {}
+    renderAll();
+    showToast('Impossible de charger les données Firebase.', 'error');
+  }
+}
+
+async function saveData(actionMessage) {
+  if (actionMessage) {
+    appData.auditLog.unshift({ id: Date.now(), date: new Date().toLocaleString('fr-FR'), user: auth.currentUser ? auth.currentUser.email : 'Admin', action: actionMessage });
+    if (appData.auditLog.length > 150) appData.auditLog = appData.auditLog.slice(0, 150);
+  }
+  try { localStorage.setItem('baledi_admin_local', JSON.stringify(appData)); } catch (e) {}
+  try {
+    const res = await fetch(FIREBASE_BASE + FIREBASE_ADMIN_PATH, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(appData) });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    _serverOnline = true; setConnection(true); showToast('Sauvegarde confirmée', 'success'); renderAll();
+  } catch (e) {
+    _serverOnline = false; setConnection(false, 'Sauvegarde échouée'); showToast('Sauvegarde échouée. Vérifiez Internet.', 'error');
+  }
+}
+
+function updateBrand() {
+  $('sidebar-brand-name').textContent = appData.settings.nomEntreprise;
+  $('login-brand-name').textContent = appData.settings.nomEntreprise + ' SUPER ADMIN V2';
+}
+
+// ========== CRÉATION DE L'ESPACE ÉCOLE ET DU PREMIER COMPTE ==========
+function genererMotDePasseEcole(longueur = 14) {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
+  const valeurs = new Uint8Array(longueur);
+  if (!window.crypto || !crypto.getRandomValues) throw new Error('Générateur sécurisé indisponible.');
+  crypto.getRandomValues(valeurs);
+  return Array.from(valeurs, v => alphabet[v % alphabet.length]).join('');
+}
+async function hashMotDePasseEcole(motDePasse) {
+  if (!window.crypto || !crypto.subtle) throw new Error('Le navigateur ne permet pas le chiffrement sécurisé.');
+  const saltBytes = new Uint8Array(16); crypto.getRandomValues(saltBytes);
+  const salt = Array.from(saltBytes, b => b.toString(16).padStart(2, '0')).join('');
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(motDePasse), { name: 'PBKDF2' }, false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: new TextEncoder().encode(salt), iterations: 100000, hash: 'SHA-256' }, key, 256);
+  const hash = Array.from(new Uint8Array(bits), b => b.toString(16).padStart(2, '0')).join('');
+  return 'pbkdf2:100000:' + salt + ':' + hash;
+}
+async function creerEspaceEcole(slug, nom, ville) {
+  const urlEspace = FIREBASE_BASE + '/' + slug + '.json';
+  try {
+    // Ne jamais écraser silencieusement un espace déjà existant.
+    const check = await fetch(urlEspace, { cache: 'no-store' });
+    if (!check.ok) throw new Error('Vérification Firebase impossible (HTTP ' + check.status + ')');
+    const existing = await check.json();
+    if (existing !== null) throw new Error('Un espace Firebase existe déjà pour ce code.');
+
+    const username = ('admin_' + slug).slice(0, 40);
+    const password = genererMotDePasseEcole(14);
+    const passwordHash = await hashMotDePasseEcole(password);
+    const firstAdmin = { id: 'admin_' + slug, username, password: passwordHash, name: 'Administrateur', role: 'Administrateur', active: true, createdAt: new Date().toISOString() };
+    const espaceInitial = {
+      db: { students: [], payments: [], employees: [], admins: [], presence: [], expenses: [], studentPresence: [], tasks: [], options: ["Scientifique","Commerciale et Gestion","Littéraire","Pédagogie Générale","Sciences Sociales","Technique","Électrotechnique","Coupe et Couture","Hôtellerie","Construction","Mécanique Générale"], fees: {}, extraFees: {}, receipt: 1, settings: { school: nom, address: '', phone: '', year: '2026-2027', rate: 2850, receiptFormat: 'REÇU N° {N}', logo: '' } },
+      auth: [firstAdmin], audit: [], trash: [], views: {}, events: [], createdBy: 'super_admin', createdAt: new Date().toISOString(), schoolName: nom, schoolCity: ville || 'Non spécifiée'
+    };
+    const res = await fetch(urlEspace, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(espaceInitial) });
+    if (!res.ok) throw new Error('Création Firebase impossible (HTTP ' + res.status + ')');
+    return { ok: true, credentials: { username, password } };
+  } catch (e) {
+    console.error('Création espace école :', e);
+    return { ok: false, error: e.message || 'Erreur inconnue' };
+  }
+}
+
+// ========== NAVIGATION ==========
+window.navigateTo = function(pageId) {
+  if ($('sidebar').classList.contains('open')) toggleSidebar();
+  document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+  const page = $('page-' + pageId);
+  if (page) page.classList.add('active');
+  document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+  const di = document.querySelector('.menu-item[onclick*="' + pageId + '"]');
+  if (di) di.classList.add('active');
+  document.querySelectorAll('.m-item').forEach(i => i.classList.remove('active'));
+  const mi = document.querySelector('.m-item[onclick*="' + pageId + '"]');
+  if (mi) mi.classList.add('active');
+  document.querySelector('.main-content').scrollTo(0, 0);
+  if (pageId === 'dashboard' || pageId === 'rapports') setTimeout(renderCharts, 100);
+};
+
+window.openModal = function(id) {
+  if (id === 'modal-add-contrat') {
+    const s = $('contrat-ecole');
+    s.innerHTML = appData.ecoles.length ? appData.ecoles.map(e => '<option value="' + esc(e.nom) + '">' + esc(e.nom) + '</option>').join('') : '<option value="">Aucune école disponible</option>';
+  }
+  if (id === 'modal-add-essai') {
+    const s = $('essai-ecole');
+    const disponibles = appData.ecoles.filter(e => e.statut !== 'Actif' && e.statut !== 'Active');
+    s.innerHTML = disponibles.length ? disponibles.map(e => '<option value="' + Number(e.id) + '">' + esc(e.nom) + '</option>').join('') : '<option value="">Aucune école disponible pour un essai</option>';
+  }
+  const m = $(id); if (m) m.classList.add('active');
+};
+
+window.closeModal = function(id) { const m = $(id); if (m) m.classList.remove('active'); };
+
+// ========== RENDER ALL ==========
+function renderAll() {
+  renderDashboard(); renderEcoles(); renderProspects(); renderLicences(); renderSelectPaiement(); renderTransactions();
+  renderUtilisateurs(); renderTickets(); renderContrats(); renderEssais(); renderNotifications(); renderAudit(); renderParametres();
+  if ($('page-dashboard').classList.contains('active') || $('page-rapports').classList.contains('active')) renderCharts();
+}
+
+// ========== DASHBOARD ==========
+function renderDashboard() {
+  $('stat-total-ecoles').textContent = appData.ecoles.length;
+  $('stat-total-actives').textContent = appData.ecoles.filter(e => e.statut === 'Actif' || e.statut === 'Active').length;
+  $('stat-total-essais').textContent = appData.ecoles.filter(e => e.statut === 'Essai').length;
+  $('stat-total-suspendues').textContent = appData.ecoles.filter(e => e.statut === 'Suspendue').length;
+  const total = appData.transactions.reduce((s, t) => s + (Number(t.montant) || 0), 0);
+  $('stat-total-revenus').textContent = money(total) + ' $';
+
+  const act = appData.auditLog.slice(0, 5);
+  $('dashboard-activity').innerHTML = act.length ? act.map(a => '<div class="activity-item"><span>' + esc(a.action) + '</span><span class="muted">' + esc(a.date) + '</span></div>').join('') : '<div class="empty-state">Aucune activité.</div>';
+
+  const tr = appData.transactions.slice().sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 5);
+  $('dashboard-transactions').innerHTML = tr.length ? tr.map(t => '<div class="activity-item"><span>' + esc(t.ecoleNom) + '</span><span style="color:var(--success);font-weight:700">+' + Number(t.montant || 0) + ' $</span></div>').join('') : '<div class="empty-state">Aucune transaction.</div>';
+
+  $('dashboard-system').innerHTML =
+    '<div class="activity-item"><span>Statut Firebase</span><span style="color:' + (_serverOnline ? 'var(--success)' : 'var(--danger)') + ';font-weight:700">' + (_serverOnline ? 'Opérationnel' : 'Hors ligne') + '</span></div>' +
+    '<div class="activity-item"><span>Écoles actives</span><span>' + appData.ecoles.filter(e => e.statut === 'Actif' || e.statut === 'Active').length + ' / ' + appData.ecoles.length + '</span></div>' +
+    '<div class="activity-item"><span>Prix de licence</span><span>' + Number(appData.settings.prixLicence) + ' $</span></div>' +
+    '<div class="activity-item"><span>Dernière synchro</span><span>' + new Date().toLocaleTimeString('fr-FR') + '</span></div>';
+}
+
+// ========== ÉCOLES ==========
+function renderEcoles() {
+  const c = $('ecoles-list-container');
+  const q = ($('search-ecoles').value || '').toLowerCase().trim();
+  const list = q ? appData.ecoles.filter(e => String(e.nom || '').toLowerCase().includes(q) || String(e.ville || '').toLowerCase().includes(q) || String(e.slug || '').toLowerCase().includes(q)) : appData.ecoles;
+
+  if (!list.length) {
+    c.innerHTML = '<div class="card"><div class="empty-state"><i class="fa-solid fa-school" style="font-size:30px;margin-bottom:10px;color:#cbd5e1"></i><br>' + (q ? 'Aucun résultat.' : 'Aucune école.') + '</div></div>';
+    $('ecole-details-container').style.display = 'none'; return;
+  }
+
+  c.innerHTML = list.map(e => {
+    const isActive = (e.statut === 'Actif' || e.statut === 'Active');
+    const badgeClass = isActive ? 'success' : (e.statut === 'Suspendue' ? 'danger' : 'warning');
+    return '<div class="etab-item ' + (e.id === selectedEcoleId ? 'active' : '') + '" onclick="selectEcole(' + Number(e.id) + ')">' +
+      '<div class="etab-logo"><i class="fa-solid fa-school"></i></div>' +
+      '<div class="etab-info"><h4>' + esc(e.nom) + '</h4><p>' + esc(e.ville) + ' • <span class="slug-badge">' + esc(e.slug || 'no-slug') + '</span></p></div>' +
+      '<span class="badge ' + badgeClass + '" style="margin-left:auto">' + esc(e.statut) + '</span></div>';
+  }).join('');
+
+  if (selectedEcoleId !== null) {
+    const ecole = appData.ecoles.find(e => e.id === selectedEcoleId);
+    if (ecole) {
+      const d = $('ecole-details-container'); d.style.display = 'block';
+      const paye = Number(ecole.paye) || 0; const prix = Number(appData.settings.prixLicence) || 300;
+      const pct = Math.max(0, Math.min(100, (paye / prix) * 100)); const isActive = (ecole.statut === 'Actif' || ecole.statut === 'Active');
+
+      d.innerHTML = '<h3 style="margin-bottom:10px">' + esc(ecole.nom) + '</h3>' +
+        '<div class="info-box">' +
+          '<p style="font-size:12px;margin-bottom:5px">Ville : <strong>' + esc(ecole.ville) + '</strong></p>' +
+          '<p style="font-size:12px;margin-bottom:5px">Code d\'accès : <span class="slug-badge">' + esc(ecole.slug) + '</span></p>' +
+          '<p style="font-size:12px;margin-bottom:5px">Payé : <strong style="color:var(--success)">' + paye + ' $</strong> / ' + prix + ' $</p>' +
+          '<p style="font-size:12px;margin-bottom:5px">Fin de licence : <strong>' + (ecole.dateFin ? esc(ecole.dateFin) : 'Non définie') + '</strong></p>' +
+          '<div class="progress-container"><div class="progress-bar" style="width:' + pct + '%"></div></div></div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' +
+          '<button class="btn btn-primary btn-sm" onclick="copierLien(\'' + esc(ecole.slug) + '\')"><i class="fa-solid fa-copy"></i> Copier le lien</button>' +
+          '<button class="btn btn-ghost btn-sm" onclick="voirEspace(\'' + esc(ecole.slug) + '\')"><i class="fa-solid fa-database"></i> Voir l\'espace</button>' +
+          '<button class="btn btn-ghost btn-sm" onclick="ouvrirEditionEcole(' + Number(ecole.id) + ')"><i class="fa-solid fa-pen"></i> Modifier</button>' +
+          (isActive ? '<button class="btn btn-danger btn-sm" onclick="toggleStatutEcole(' + Number(ecole.id) + ', \'Suspendue\')"><i class="fa-solid fa-pause"></i> Suspendre</button>' : '<button class="btn btn-success btn-sm" onclick="toggleStatutEcole(' + Number(ecole.id) + ', \'Actif\')"><i class="fa-solid fa-play"></i> Activer</button>') +
+          '<button class="btn btn-danger btn-sm" onclick="supprimerEcole(' + Number(ecole.id) + ')"><i class="fa-solid fa-trash"></i> Supprimer</button></div>';
+    }
+  } else { $('ecole-details-container').style.display = 'none'; }
+}
+
+window.selectEcole = function(id) { selectedEcoleId = id; renderEcoles(); };
+
+// ========== PROSPECTION ==========
+function renderProspects() {
+  const t = $('prospects-table-body');
+  t.innerHTML = appData.prospects.length ? appData.prospects.map(p => {
+        const dejaEcole = appData.ecoles.some(e => e.nom === p.nom);
+        return '<tr><td><strong>' + esc(p.nom) + '</strong>' + (dejaEcole ? ' <span class="badge success">Déjà école</span>' : '') + '</td>' +
+          '<td>' + esc(p.contact) + '</td><td><span class="badge info">' + esc(p.statut) + '</span></td>' +
+          '<td>' + (dejaEcole ? '—' : '<button class="btn btn-success btn-sm" onclick="convertirProspect(' + Number(p.id) + ')"><i class="fa-solid fa-arrow-right"></i> Convertir</button> <button class="btn btn-danger btn-sm" onclick="supprimerProspect(' + Number(p.id) + ')"><i class="fa-solid fa-trash"></i></button>') + '</td></tr>';
+      }).join('') : '<tr><td colspan="4" class="empty-state">Aucun prospect.</td></tr>';
+}
+
+// ========== LICENCES / PAIEMENTS / UTILISATEURS ==========
+function renderLicences() {
+  const t = $('licences-table-body');
+  t.innerHTML = appData.ecoles.length ? appData.ecoles.map(e => {
+        const isActive = (e.statut === 'Actif' || e.statut === 'Active');
+        const badgeClass = isActive ? 'success' : (e.statut === 'Suspendue' ? 'danger' : 'warning');
+        return '<tr><td><strong>' + esc(e.nom) + '</strong></td><td><span class="slug-badge">' + esc(e.slug) + '</span></td>' +
+          '<td><span class="badge ' + badgeClass + '">' + esc(e.statut) + '</span></td>' +
+          '<td>' + (e.dateDebutEssai || '—') + '</td><td>' + (e.dateFin || '—') + '</td></tr>';
+      }).join('') : '<tr><td colspan="5" class="empty-state">Aucune licence.</td></tr>';
+}
+
+function renderSelectPaiement() {
+  const s = $('pay-ecole'); const cur = s.value;
+  s.innerHTML = '<option value="">Sélectionner une école</option>' + appData.ecoles.map(e => '<option value="' + Number(e.id) + '">' + esc(e.nom) + '</option>').join('');
+  if (appData.ecoles.some(e => String(e.id) === cur)) s.value = cur;
+}
+
+function renderTransactions() {
+  const t = $('transactions-table-body');
+  const list = appData.transactions.slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  t.innerHTML = list.length ? list.map(x => '<tr><td>' + esc(new Date(x.date).toLocaleString('fr-FR')) + '</td><td><strong>' + esc(x.ecoleNom) + '</strong></td><td style="color:var(--success);font-weight:700">' + Number(x.montant || 0) + ' $</td></tr>').join('') : '<tr><td colspan="3" class="empty-state">Aucune transaction.</td></tr>';
+}
+
+function renderUtilisateurs() {
+  $('users-table-body').innerHTML = appData.utilisateurs.length ? appData.utilisateurs.map(u => '<tr><td><strong>' + esc(u.nom) + '</strong></td><td><span class="badge ' + (u.role === 'Super Admin' ? 'success' : 'info') + '">' + esc(u.role) + '</span></td></tr>').join('') : '<tr><td colspan="2" class="empty-state">Aucun utilisateur.</td></tr>';
+}
+
+function renderTickets() {
+  const t = $('tickets-table-body');
+  t.innerHTML = appData.tickets.length ? appData.tickets.map(x => '<tr><td><strong>' + esc(x.ecole) + '</strong></td><td>' + esc(x.sujet) + '</td><td><span class="badge ' + (x.statut === 'Résolu' ? 'success' : 'warning') + '">' + esc(x.statut) + '</span></td><td>' + (x.statut !== 'Résolu' ? '<button class="btn btn-primary btn-sm" onclick="resoudreTicket(' + Number(x.id) + ')">Résoudre</button>' : '✓') + '</td></tr>').join('') : '<tr><td colspan="4" class="empty-state">Aucun ticket.</td></tr>';
+}
+
+function renderContrats() {
+  const t = $('contrats-table-body');
+  t.innerHTML = appData.contrats.length ? appData.contrats.map(c => '<tr><td><strong>' + esc(c.ecole) + '</strong></td><td>' + esc(c.date) + '</td><td><span class="badge success">Signé</span></td></tr>').join('') : '<tr><td colspan="3" class="empty-state">Aucun contrat.</td></tr>';
+}
+
+function renderEssais() {
+  const t = $('essais-table-body');
+  const records = appData.essaisGratuits.slice();
+  appData.ecoles.filter(e => e.statut === 'Essai' && !records.some(x => Number(x.ecoleId) === Number(e.id))).forEach(e => records.push({ id: 'legacy-' + e.id, ecoleId: e.id, ecole: e.nom, slug: e.slug, dateDebut: e.dateDebutEssai || '', dateFin: e.dateFinEssai || '', statut: 'En cours', legacy: true }));
+  t.innerHTML = records.length ? records.map(x => {
+        const ecole = appData.ecoles.find(e => Number(e.id) === Number(x.ecoleId));
+        const nom = x.ecole || (ecole && ecole.nom) || 'École inconnue'; const slug = x.slug || (ecole && ecole.slug) || '—'; const statut = x.statut || 'En cours';
+        const badge = statut === 'Terminé' ? 'danger' : (statut === 'Converti' ? 'success' : 'warning');
+        const action = x.legacy ? '—' : (statut === 'En cours' ? '<button class="btn btn-success btn-sm" onclick="terminerEssai(' + Number(x.id) + ', true)">Convertir en actif</button> <button class="btn btn-danger btn-sm" onclick="terminerEssai(' + Number(x.id) + ', false)">Terminer</button>' : '—');
+        return '<tr><td><strong>' + esc(nom) + '</strong></td><td><span class="slug-badge">' + esc(slug) + '</span></td><td>' + esc(x.dateDebut || '—') + '</td><td>' + esc(x.dateFin || '—') + '</td><td><span class="badge ' + badge + '">' + esc(statut) + '</span></td><td>' + action + '</td></tr>';
+      }).join('') : '<tr><td colspan="6" class="empty-state">Aucun essai gratuit.</td></tr>';
+}
+
+function renderNotifications() {
+  const t = $('notifs-table-body');
+  t.innerHTML = appData.notifications.length ? appData.notifications.map(n => '<tr><td>' + esc(n.date) + '</td><td><strong>' + esc(n.titre) + '</strong></td><td>' + esc(n.message) + '</td></tr>').join('') : '<tr><td colspan="3" class="empty-state">Aucune notification.</td></tr>';
+}
+
+function renderAudit() {
+  const t = $('audit-table-body');
+  t.innerHTML = appData.auditLog.length ? appData.auditLog.slice(0, 100).map(a => '<tr><td>' + esc(a.date) + '</td><td><strong>' + esc(a.user) + '</strong></td><td>' + esc(a.action) + '</td></tr>').join('') : '<tr><td colspan="3" class="empty-state">Aucune action.</td></tr>';
+}
+
+// ========== GRAPHIQUES ==========
+function renderCharts() {
+  if (typeof Chart === 'undefined') return;
+  try {
+    const c1 = $('revenueChart');
+    if (c1 && c1.offsetParent !== null) {
+      if (chartInstance) chartInstance.destroy();
+      const total = appData.transactions.reduce((s, t) => s + (Number(t.montant) || 0), 0);
+      chartInstance = new Chart(c1.getContext('2d'), { type: 'line', data: { labels: ['Jan','Fév','Mar','Avr','Mai','Auj.'], datasets: [{ data: [0,0,0,0,0,total], borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,.1)', borderWidth: 3, fill: true, tension: .4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+    }
+    const c2 = $('statusChart');
+    if (c2 && c2.offsetParent !== null) {
+      if (donutInstance) donutInstance.destroy();
+      const a = appData.ecoles.filter(e => e.statut === 'Actif' || e.statut === 'Active').length; const b = appData.ecoles.filter(e => e.statut === 'Essai').length; const c = appData.ecoles.filter(e => e.statut === 'Suspendue').length;
+      donutInstance = new Chart(c2.getContext('2d'), { type: 'doughnut', data: { labels: ['Actives','Essai','Suspendues'], datasets: [{ data: [a,b,c], backgroundColor: ['#10b981','#f59e0b','#ef4444'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom' } } } });
+    }
+  } catch (e) {}
+}
+
+// ========== ACTIONS : ÉCOLES ==========
+window.ajouterEcole = async function() {
+  const nom = $('new-nom').value.trim(); const ville = $('new-ville').value.trim(); const fin = $('new-date-fin').value;
+  if (!nom || !ville) return showToast('Remplissez nom et ville.', 'error');
+  if (appData.ecoles.some(e => e.nom === nom)) return showToast('Cette école existe déjà.', 'error');
+  const slug = generateSlug(nom); if (!slug) return showToast('Nom invalide.', 'error');
+  if (appData.ecoles.some(e => e.slug === slug)) return showToast('Un slug identique existe déjà.', 'error');
+
+  const id = Date.now();
+  const nouvelleEcole = { id, nom, ville, slug, statut: 'Essai', paye: 0, dateDebutEssai: new Date().toLocaleDateString('fr-FR'), dateFin: fin || null, createdAt: new Date().toISOString() };
+
+  showToast('Création de l\'espace et du compte administrateur...', 'info');
+  const resultat = await creerEspaceEcole(slug, nom, ville);
+  if (!resultat.ok) return showToast('École non créée : ' + resultat.error, 'error');
+
+  appData.ecoles.push(nouvelleEcole); selectedEcoleId = id;
+  $('new-nom').value = ''; $('new-ville').value = ''; $('new-date-fin').value = '';
+  closeModal('modal-add-ecole');
+  await saveData('A créé l\'école : ' + nom + ' (slug: ' + slug + ', compte administrateur initial créé)');
+  const lien = window.location.origin + '/' + (appData.settings.fichierEcole || 'BALEDI_GESTION_SCOLAIRE.html') + '?school=' + encodeURIComponent(slug);
+  alert('ÉCOLE CRÉÉE AVEC SUCCÈS\n\nÉcole : ' + nom + '\nLien : ' + lien + '\nIdentifiant : ' + resultat.credentials.username + '\nMot de passe provisoire : ' + resultat.credentials.password + '\n\nIMPORTANT : copiez et conservez ces identifiants maintenant. Le mot de passe ne sera plus affiché.');
+};
+
+window.ouvrirEditionEcole = function(id) {
+  const e = appData.ecoles.find(x => x.id === id); if (!e) return;
+  $('edit-id').value = id; $('edit-nom').value = e.nom || ''; $('edit-ville').value = e.ville || '';
+  $('edit-date-fin').value = e.dateFin || ''; $('edit-slug').value = e.slug || '';
+  openModal('modal-edit-ecole');
+};
+
+window.sauvegarderEcole = function() {
+  const id = Number($('edit-id').value); const e = appData.ecoles.find(x => x.id === id); if (!e) return;
+  const nom = $('edit-nom').value.trim(); const ville = $('edit-ville').value.trim(); const fin = $('edit-date-fin').value;
+  if (!nom || !ville) return showToast('Remplissez nom et ville.', 'error');
+  e.nom = nom; e.ville = ville; e.dateFin = fin || null;
+  saveData('A modifié l\'école : ' + nom); closeModal('modal-edit-ecole');
+};
+
+window.toggleStatutEcole = function(id, newStatut) {
+  const e = appData.ecoles.find(x => x.id === id); if (!e) return;
+  e.statut = newStatut; saveData('A changé le statut de ' + e.nom + ' en : ' + newStatut);
+};
+
+window.supprimerEcole = async function(id) {
+  const e = appData.ecoles.find(x => x.id === id); if (!e) return;
+  if (!confirm('Supprimer « ' + e.nom + ' » ?\n\nL\'espace Firebase de cette école ne sera PAS supprimé (sécurité).')) return;
+  appData.ecoles = appData.ecoles.filter(x => x.id !== id); if (selectedEcoleId === id) selectedEcoleId = null;
+  saveData('A supprimé l\'école : ' + e.nom);
+};
+
+// ========== LIEN / ESPACE ==========
+window.copierLien = function(slug) {
+  const nomFichier = (appData.settings.fichierEcole || 'BALEDI_GESTION_SCOLAIRE.html').trim();
+  const baseUrl = window.location.href.split('?')[0].split('/').slice(0, -1).join('/') + '/';
+  const lien = baseUrl + nomFichier + '?school=' + slug;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(lien).then(() => { showToast('Lien copié : ' + lien, 'success'); }).catch(() => { prompt('Copiez ce lien :', lien); });
+  } else { prompt('Copiez ce lien :', lien); }
+};
+
+window.voirEspace = function(slug) { window.open(FIREBASE_BASE + '/' + slug + '.json?print=pretty', '_blank'); };
+
+// ========== ACTIONS : PROSPECTION / PAIEMENTS ==========
+window.ajouterProspect = function() {
+  const nom = $('pros-nom').value.trim(); const contact = $('pros-contact').value.trim(); const ville = $('pros-ville').value.trim();
+  if (!nom || !contact) return showToast('Nom et contact requis.', 'error');
+  if (appData.prospects.some(p => p.nom === nom)) return showToast('Prospect déjà existant.', 'error');
+  appData.prospects.push({ id: Date.now(), nom, contact, ville: ville || '', statut: 'Nouveau', date: new Date().toLocaleDateString('fr-FR') });
+  $('pros-nom').value = ''; $('pros-contact').value = ''; $('pros-ville').value = '';
+  saveData('A ajouté un prospect : ' + nom); closeModal('modal-add-prospect');
+};
+
+window.convertirProspect = async function(id) {
+  const p = appData.prospects.find(x => x.id === id); if (!p) return;
+  if (appData.ecoles.some(e => e.nom === p.nom)) return showToast('Une école avec ce nom existe déjà.', 'error');
+  const slug = generateSlug(p.nom); if (!slug) return showToast('Nom invalide.', 'error');
+  showToast('Création de l\'espace école...', 'info');
+  const espaceOk = await creerEspaceEcole(slug, p.nom, p.ville || 'À définir');
+  appData.ecoles.push({ id: Date.now(), nom: p.nom, ville: p.ville || 'À définir', slug, statut: 'Essai', paye: 0, dateDebutEssai: new Date().toLocaleDateString('fr-FR'), dateFin: null, createdAt: new Date().toISOString() });
+  appData.prospects = appData.prospects.filter(x => x.id !== id);
+  saveData('A converti le prospect "' + p.nom + '" en école' + (espaceOk ? ' (espace créé)' : ' (espace à recréer)'));
+};
+
+window.supprimerProspect = function(id) {
+  const p = appData.prospects.find(x => x.id === id); if (!p) return;
+  if (!confirm('Supprimer le prospect « ' + p.nom + ' » ?')) return;
+  appData.prospects = appData.prospects.filter(x => x.id !== id); saveData('A supprimé le prospect : ' + p.nom);
+};
+
+window.enregistrerPaiement = function() {
+  const ecoleId = $('pay-ecole').value; const montant = Number($('pay-montant').value);
+  if (!ecoleId || !Number.isFinite(montant) || montant <= 0) return showToast('Sélectionnez une école et un montant valide.', 'error');
+  const ecole = appData.ecoles.find(e => String(e.id) === String(ecoleId));
+  if (!ecole) return showToast('École introuvable.', 'error');
+  ecole.paye = (Number(ecole.paye) || 0) + montant; ecole.statut = 'Actif';
+  appData.transactions.push({ id: Date.now(), ecoleNom: ecole.nom, montant, date: new Date().toISOString() });
+  saveData('A encaissé ' + montant + '$ pour : ' + ecole.nom); $('pay-montant').value = '';
+};
+
+// ========== ACTIONS : AUTRES ==========
+window.ajouterUtilisateur = function() {
+  const nom = $('user-nom').value.trim(); const role = $('user-role').value;
+  if (!nom) return showToast('Entrez le nom.', 'error');
+  appData.utilisateurs.push({ id: Date.now(), nom, role, statut: 'Actif' }); $('user-nom').value = '';
+  saveData('A invité un collaborateur : ' + nom); closeModal('modal-add-user');
+};
+
+window.ajouterTicket = function() {
+  const ecole = $('ticket-ecole').value.trim(); const sujet = $('ticket-sujet').value.trim();
+  if (!ecole || !sujet) return showToast('Remplissez les champs.', 'error');
+  appData.tickets.push({ id: Date.now(), ecole, sujet, statut: 'Ouvert' });
+  $('ticket-ecole').value = ''; $('ticket-sujet').value = '';
+  saveData('A ouvert un ticket pour : ' + ecole); closeModal('modal-add-ticket');
+};
+
+window.resoudreTicket = function(id) {
+  const t = appData.tickets.find(x => x.id === id); if (!t) return;
+  t.statut = 'Résolu'; saveData('A résolu le ticket de : ' + t.ecole);
+};
+
+window.ajouterContrat = function() {
+  const ecole = $('contrat-ecole').value; const date = $('contrat-date').value;
+  if (!ecole || !date) return showToast('Sélectionnez une école et une date.', 'error');
+  appData.contrats.push({ id: Date.now(), ecole, date }); $('contrat-date').value = '';
+  saveData('A signé un contrat avec : ' + ecole); closeModal('modal-add-contrat');
+};
+
+window.demarrerEssai = function() {
+  const ecoleId = Number($('essai-ecole').value); const duree = Number($('essai-duree').value);
+  const ecole = appData.ecoles.find(e => Number(e.id) === ecoleId);
+  if (!ecole) return showToast('Sélectionnez une école valide.', 'error');
+  if (!Number.isInteger(duree) || duree < 1 || duree > 90) return showToast('Durée invalide (1-90 jours).', 'error');
+  if (appData.essaisGratuits.some(x => Number(x.ecoleId) === ecoleId && x.statut === 'En cours')) return showToast('Cette école possède déjà un essai en cours.', 'error');
+  const debut = new Date(); const fin = new Date(debut); fin.setDate(fin.getDate() + duree); const dateISO = d => d.toISOString().slice(0, 10);
+  appData.essaisGratuits.push({ id: Date.now(), ecoleId, ecole: ecole.nom, slug: ecole.slug, dateDebut: dateISO(debut), dateFin: dateISO(fin), dureeJours: duree, statut: 'En cours', createdAt: debut.toISOString() });
+  ecole.statut = 'Essai'; ecole.dateDebutEssai = dateISO(debut); ecole.dateFinEssai = dateISO(fin);
+  $('essai-duree').value = '15'; saveData('A démarré un essai gratuit de ' + duree + ' jours pour : ' + ecole.nom); closeModal('modal-add-essai');
+};
+
+window.terminerEssai = function(id, convertir) {
+  const essai = appData.essaisGratuits.find(x => Number(x.id) === Number(id)); if (!essai) return;
+  const ecole = appData.ecoles.find(e => Number(e.id) === Number(essai.ecoleId));
+  essai.statut = convertir ? 'Converti' : 'Terminé'; essai.termineAt = new Date().toISOString();
+  if (ecole) ecole.statut = convertir ? 'Actif' : 'Suspendue';
+  saveData((convertir ? 'A converti l’essai en licence active pour : ' : 'A terminé l’essai gratuit de : ') + (essai.ecole || (ecole && ecole.nom) || 'école'));
+};
+
+window.envoyerNotif = function() {
+  const titre = $('notif-titre').value.trim(); const message = $('notif-message').value.trim();
+  if (!titre || !message) return showToast('Remplissez titre et message.', 'error');
+  appData.notifications.push({ id: Date.now(), date: new Date().toLocaleString('fr-FR'), titre, message });
+  $('notif-titre').value = ''; $('notif-message').value = '';
+  saveData('A envoyé la notification : ' + titre); closeModal('modal-add-notif');
+};
+
+// ========== PARAMÈTRES ==========
+function renderParametres() {
+  $('set-nom').value = appData.settings.nomEntreprise || '';
+  $('set-prix').value = appData.settings.prixLicence || 300;
+  $('set-fichier').value = appData.settings.fichierEcole || 'BALEDI_GESTION_SCOLAIRE.html';
+}
+
+window.sauvegarderParametres = function() {
+  const nom = $('set-nom').value.trim(); const prix = Number($('set-prix').value); const fichier = $('set-fichier').value.trim();
+  if (!nom || !Number.isFinite(prix) || prix <= 0) return showToast('Valeurs invalides.', 'error');
+  appData.settings.nomEntreprise = nom; appData.settings.prixLicence = prix; appData.settings.fichierEcole = fichier || 'BALEDI_GESTION_SCOLAIRE.html';
+  updateBrand(); saveData('A modifié les paramètres');
+};
+
+window.exportData = function() {
+  try {
+    const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a');
+    a.href = url; a.download = 'baledi_backup_' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    showToast('Export généré.', 'success');
+  } catch (e) { showToast('Export impossible.', 'error'); }
+};
+
+// Exposer les fonctions utilisées par le HTML (inline onclick)
+window.renderEcoles = renderEcoles;
+
+</script>
+</body>
+</html>
